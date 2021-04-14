@@ -1,6 +1,8 @@
 import json
 import os
 import requests
+import rasterio
+import s3fs
 
 from logging import getLogger
 from urllib.parse import urljoin
@@ -9,6 +11,8 @@ from .utils import mkdirp, get_s3_signed_url
 
 
 logger = getLogger(__name__)
+
+fs = s3fs.S3FileSystem()
 
 
 class STACError(Exception):
@@ -50,6 +54,9 @@ class Thing(object):
                 # try signed URL
                 url, headers = get_s3_signed_url(filename)
                 dat = cls.open_remote(url, headers)
+        elif filename[0:2] == 's3':
+            with fs.open(filename) as f:
+                dat = json.loads(f.read())
         else:
             if os.path.exists(filename):
                 dat = open(filename).read()
